@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
 #define DEBUG 0
 #define SIZE_OF_MEM 32
 
@@ -47,7 +46,7 @@ typedef struct CPU_s {
     Register PC;
     Register MAR;
     short MDR;
-    Register CC;        
+    Register CC;
 }
 CPU_s;
 

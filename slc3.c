@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "lc3.h"
+#include "slc3.h"
 
 // you can define a simple memory module here for this program
 Register memory[SIZE_OF_MEM]; // 32 words of memory enough to store simple program
@@ -18,20 +18,20 @@ void setCC(Register result, CPU_p cpu) {
 }
 
 //Prints out the register values, the IR, PC, MAR, and MDR.
-void printCurrentState(CPU_p cpu) {
-  int i;
-  int numOfRegisters = sizeof(cpu->regFile)/sizeof(cpu->regFile[0]);
-  printf("Registers: ");
-  for (i = 0; i < numOfRegisters; i++) {
-    printf("R%d: %d | ", i, cpu->regFile[i]);
-  }
-  printf("\nIR: %d\nPC: %d\nMAR: %d\nMDR: %d\n", cpu->IR, cpu->PC, cpu->MAR, cpu->MDR);
-  
-  for (i = 0; i < SIZE_OF_MEM; i++) {
-    printf("memory[%d]: %d\n", i, memory[i]);
-  }
-  printf("\n");
-}
+void printCurrentState(CPU_p cpu);// {
+//   int i;
+//   int numOfRegisters = sizeof(cpu->regFile)/sizeof(cpu->regFile[0]);
+//   printf("Registers: ");
+//   for (i = 0; i < numOfRegisters; i++) {
+//     printf("R%d: %d | ", i, cpu->regFile[i]);
+//   }
+//   printf("\nIR: %d\nPC: %d\nMAR: %d\nMDR: %d\n", cpu->IR, cpu->PC, cpu->MAR, cpu->MDR);
+//
+//   for (i = 0; i < SIZE_OF_MEM; i++) {
+//     printf("memory[%d]: %d\n", i, memory[i]);
+//   }
+//   printf("\n");
+// }
 
 //Function to handle TRAP routines.
 int trap(int trap_vector) {
@@ -46,7 +46,7 @@ int controller(CPU_p cpu) {
     if (cpu == NULL) {
       return -1;
     }
-    
+
     ALU_p alu = malloc(sizeof(struct ALU_s));
     Register opcode, Rd, Rs1, Rs2, immed_offset, nzp, BEN, pcOffset9; // fields for the IR
     int state = FETCH;
@@ -57,7 +57,7 @@ int controller(CPU_p cpu) {
                 cpu->PC++; // increment PC
                 cpu->MDR = memory[cpu->MAR];
                 cpu->IR = cpu->MDR;
-    
+
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========FETCH==============\n");
@@ -81,14 +81,14 @@ int controller(CPU_p cpu) {
                 if (pcOffset9 & 0x0100) {
                     pcOffset9 = pcOffset9 | 0xFE00;
                 }
-    
+
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========DECODE==============\n");
                 printCurrentState(cpu);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                
+
                 state = EVAL_ADDR;
                 break;
             case EVAL_ADDR:
@@ -108,14 +108,14 @@ int controller(CPU_p cpu) {
                     default:
                         break;
                 }
-                    
+
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========EVAL_ADDR==============\n");
                 printCurrentState(cpu);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                
+
                 state = FETCH_OP;
                 break;
             case FETCH_OP:
@@ -150,7 +150,7 @@ int controller(CPU_p cpu) {
                 printCurrentState(cpu);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                
+
                 state = EXECUTE;
                 break;
             case EXECUTE:
@@ -175,14 +175,14 @@ int controller(CPU_p cpu) {
                         break;
                     default:
                         break;
-                }    
+                }
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========EXECUTE==============\n");
                 printCurrentState(cpu);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                
+
                 state = STORE;
                 break;
             case STORE:
@@ -206,7 +206,7 @@ int controller(CPU_p cpu) {
                     default:
                         break;
                 }
-                
+
                 state = FETCH;
 				printCurrentState(cpu);
                 break;
@@ -215,16 +215,43 @@ int controller(CPU_p cpu) {
 
 }
 
+void printCurrentState(CPU_p cpu) {
+  int i;
+  int numOfRegisters = sizeof(cpu->regFile)/sizeof(cpu->regFile[0]);
+  printf("        Registers           Memory\n");
+  for (i = 0; i < numOfRegisters; i++) {
+    printf("        R%d: x%04X", i, cpu->regFile[i]);
+    printf("        x%04X: x%04X\n", i+0x3000, memory[i]);
+  }
+}
+
 //Initializes the CPU and sets it into action.
+// int main(int argc, char* argv[]){
+//
+// 	char *temp;
+// 	int i;
+// 	CPU_p c = malloc(sizeof(CPU_s));
+// 	 for(i = 1; i < argc; i++){
+// 	 	memory[i-1] = strtol(argv[i], &temp, 16);
+// 		printf("memory[%d]: %04X\n",i-1,memory[i-1]);
+// 	}
+// 	 controller(c);
+// 	return 0;
+// }
+
 int main(int argc, char * argv[]) {
     CPU_p cpu_pointer = malloc(sizeof(struct CPU_s));
     cpu_pointer->PC = 0;
     cpu_pointer->CC = Z; //initialize condition code to zero.
-    cpu_pointer->regFile[0] = 0x1E;    
-    cpu_pointer->regFile[1] = 0x5;
-    cpu_pointer->regFile[2] = 0xF;
-    cpu_pointer->regFile[3] = 0;
- 
+    char input[50];
+    int choice;
+    char error;
+    char buf[5];
+    // cpu_pointer->regFile[0] = 0x1E;
+    // cpu_pointer->regFile[1] = 0x5;
+    // cpu_pointer->regFile[2] = 0xF;
+    // cpu_pointer->regFile[3] = 0;
+
     //char *temp;
     //memory[0] = strtol(argv[1], &temp, 16);
     //memory[1] = HALT; //TRAP #25
@@ -233,20 +260,64 @@ int main(int argc, char * argv[]) {
     //memory[22] = HALT; //TRAP #25
     //memory[30] = 0x1672; //ADD R3 R1 #-14
     //memory[31] = HALT; //TRAP #25
-    
+  while (1){
     printf("Welcome to the LC-3 Simulator Simulator\n");
-	printCurrentState(cpu_pointer);
-	printf("Select: 1) Load, 3) Step, 5) Display Mem, 9) Exit\n> _");
-    
+	  printCurrentState(cpu_pointer);
+	  printf("Select: 1) Load, 3) Step, 5) Display Mem, 9) Exit\n> _");
+    scanf("%d", &choice);
+    switch(choice){
+      case 1:
+        printf("File name: ");
+        scanf("%s", input);
+        FILE *fp = fopen(input, "r");
+        if(fp == NULL){
+          printf("Error: File not found. Press <ENTER> to continue");
+          while(1){
+            scanf("%c",&error);
+            scanf("%c",&error);
+            if(error == '\n'){
+              break;
+            }
+          }
+        } else {
+          int i = 0;
+          char *temp;
+          while(!feof(fp)) {
+            fgets(buf, 5, fp);
+            printf("%s\n", buf);
+            if(i >= SIZE_OF_MEM){
+              printf("Error: Not enough memory");
+              break;
+            }
+            memory[i] = strtol(buf, &temp, 16);
+            i++;
+            fgets(buf,3, fp);
+          }
+        }
+        break;
+      case 3:
+        break;
+      case 5:
+        break;
+      case 9:
+        return 0;
+        break;
+      default:
+        printf("Error: Invalad selection\n");
+        break;
+
+    }
+
+  }
 	//GET INPUT.
-	
+
 	//process input
-	
+
     //controller(cpu_pointer);
-    
+
     //printf("===========HALTED==============\n");
     //printCurrentState(cpu_pointer);
-    
-    
+
+
     return 0;
 }
