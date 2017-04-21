@@ -225,30 +225,28 @@ int main(int argc, char * argv[]) {
     cpu_pointer->regFile[2] = 0xF;
     cpu_pointer->regFile[3] = 0;
  
-    char *temp;
-    memory[0] = strtol(argv[1], &temp, 16);
-    memory[1] = HALT; //TRAP #25
-    memory[5] = 0xA0A0; //"You will need to put a value in location 4 - say 0xA0A0"
-    memory[21] = 0x16A6; //ADD R3 R2 #6
-    memory[22] = HALT; //TRAP #25
-    memory[30] = 0x1672; //ADD R3 R1 #-14
-    memory[31] = HALT; //TRAP #25
-    controller(cpu_pointer);
+    //char *temp;
+    //memory[0] = strtol(argv[1], &temp, 16);
+    //memory[1] = HALT; //TRAP #25
+    //memory[5] = 0xA0A0; //"You will need to put a value in location 4 - say 0xA0A0"
+    //memory[21] = 0x16A6; //ADD R3 R2 #6
+    //memory[22] = HALT; //TRAP #25
+    //memory[30] = 0x1672; //ADD R3 R1 #-14
+    //memory[31] = HALT; //TRAP #25
     
-    printf("===========HALTED==============\n");
-    printCurrentState(cpu_pointer);
+    printf("Welcome to the LC-3 Simulator Simulator\n");
+	printCurrentState(cpu_pointer);
+	printf("Select: 1) Load, 3) Step, 5) Display Mem, 9) Exit\n> _");
     
-    /**
-    ADD R3 R1 R2       0x1642
-    ADD R3, R1, #2     0x1662
-    AND R3, R1, R2     0x5642
-    AND R3, R1, #15    0x566F
-    NOT R3, R1         0x967F
-    TRAP #25           0xF019
-    LD R0, 0x0004      0x2004
-    JMP R0             0xC000
-    BRnzp #20          0x0E14
-    */
+	//GET INPUT.
+	
+	//process input
+	
+    //controller(cpu_pointer);
+    
+    //printf("===========HALTED==============\n");
+    //printCurrentState(cpu_pointer);
+    
     
     return 0;
 }
