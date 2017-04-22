@@ -216,20 +216,20 @@ void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset) {
   printf("        Registers           Memory\n");
   for (i = 0, j = mem_Offset; i < DISPLAY_SIZE; i++, j++) {
     if(i < numOfRegisters) {
-      printf("        R%d: x%04X        ", i, cpu->regFile[i]);
+      printf("        R%d: x%04X        ", i, cpu->regFile[i] & 0xffff);
     } else {
         switch(i){
           case 11:
             printf("   PC:x%04X   IR:x%04X   ",cpu->PC, cpu->IR);
             break;
           case 12:
-            printf("   A: x%04X   B: x%04X   ",alu->A, alu->B);
+            printf("   A: x%04X   B: x%04X   ",alu->A  & 0xffff, alu->B & 0xffff);
             break;
           case 13:
-            printf("  MAR:x%04X MDR: x%04X   ",cpu->MAR, cpu->MDR);
+            printf("  MAR:x%04X MDR: x%04X   ",cpu->MAR, cpu->MDR & 0xffff);
             break;
           case 14:
-            printf("      CC:N:%d Z:%d P:%d     ",cpu->n, cpu->z, cpu->p);
+            printf("      CC: N:%d Z:%d P:%d    ",cpu->CC & 4, cpu->z & 2, cpu->p & 1);
             break;
           default:
             printf("                         ");
@@ -238,6 +238,8 @@ void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset) {
     }
     if(j < SIZE_OF_MEM){
       printf("x%04X: x%04X\n", j+0x3000, memory[j]);
+    } else {
+      printf("\n");
     }
   }
 }
@@ -266,6 +268,7 @@ int main(int argc, char * argv[]) {
     char error;
     char buf[5];
     char *temp;
+    int temp_o;
     int offset = 0;
     unsigned short Start_Address = 0x3000;
     int loadedProgram = 0;
@@ -305,7 +308,6 @@ int main(int argc, char * argv[]) {
               fgets(buf,3, fp);
             }
             fgets(buf, 5, fp);
-            printf("%s\n", buf);
             if(i >= SIZE_OF_MEM){
               printf("Error: Not enough memory");
               break;
@@ -318,7 +320,7 @@ int main(int argc, char * argv[]) {
           loadedProgram = 1;
           programHalted == 0;
           //Initialize cpu fields;
-          cpu_pointer->PC = 1;
+          cpu_pointer->PC = 0;
           cpu_pointer->CC = Z;
         }
         break;
@@ -351,11 +353,25 @@ int main(int argc, char * argv[]) {
         }
         break;
       case DISPLAY_MEM:
-        printf("Starting Address: _");
+
+        printf("Starting Address: ");
         scanf("%s", input);
-        offset = strtol(input, &temp, 16) - Start_Address;
+        temp_o = strtol(input, &temp, 16) - Start_Address;
+        if(temp_o >= SIZE_OF_MEM){
+          printf("Not a valid address <ENTER> to continue.");
+          while(1){
+            scanf("%c",&error);
+            scanf("%c",&error);
+            if(error == '\n'){
+              break;
+            }
+          }
+        } else {
+          offset = temp_o;
+        }
+
         break;
-      case 9:
+      case EXIT:
         return 0;
         break;
       default:
