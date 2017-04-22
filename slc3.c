@@ -27,7 +27,7 @@ void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset, unsigned short star
 //Function to handle TRAP routines.
 int trap(int trap_vector) {
     switch(trap_vector) {
-        case HALT: //HALT
+        case HALT:
             return HALT;
     }
 }
@@ -194,7 +194,6 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 }
 
                 state = DONE;
-				//printCurrentState(cpu);
                 break;
         }
     }
@@ -228,9 +227,21 @@ void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset, unsigned short star
         }
     }
     if(j < SIZE_OF_MEM){
-      printf("x%04X: x%04X\n", j+0x3000, memory[j]);
+      printf("x%04X: x%04X\n", j + 0x3000, memory[j]);
     } else {
       printf("\n");
+    }
+  }
+}
+
+//Handles user input when an error message tells them
+//to "Press <ENTER> to continue"
+void getEnterInput(char error) {
+  while(1){
+    scanf("%c",&error);
+    scanf("%c",&error);
+    if(error == '\n'){
+      break;
     }
   }
 }
@@ -250,11 +261,9 @@ int main(int argc, char * argv[]) {
     unsigned short start_address = 0x3000;
     int loadedProgram = 0;
     int programHalted = 0;
-    int haltCode = 37;
+    int haltCode = 37; //0x25 = 37
     cpu_pointer->regFile[0] = 0x1E; //R0 = 30
     cpu_pointer->regFile[7] = 0x5; //R7 = 5
-    // cpu_pointer->regFile[2] = 0xF;
-    // cpu_pointer->regFile[3] = 0;
 
   while (1){
     printf("Welcome to the LC-3 Simulator Simulator\n");
@@ -269,13 +278,7 @@ int main(int argc, char * argv[]) {
         if(fp == NULL){
           loadedProgram = 0;
           printf("Error: File not found. Press <ENTER> to continue");
-          while(1){
-            scanf("%c",&error);
-            scanf("%c",&error);
-            if(error == '\n'){
-              break;
-            }
-          }
+          getEnterInput(error);
         } else {
           int i = 0;
           while(!feof(fp)) {
@@ -311,22 +314,10 @@ int main(int argc, char * argv[]) {
           }
         } else if (programHalted == 1){
           printf("Your program has halted. Please load another program. \nPress <ENTER> to continue");
-          while(1){
-            scanf("%c",&error);
-            scanf("%c",&error);
-            if(error == '\n'){
-              break;
-            }
-          }
+          getEnterInput(error);
         } else {
           printf("Please load a program first. Press <ENTER> to continue");
-          while(1){
-            scanf("%c",&error);
-            scanf("%c",&error);
-            if(error == '\n'){
-              break;
-            }
-          }
+          getEnterInput(error);
         }
         break;
       case DISPLAY_MEM:
@@ -336,13 +327,7 @@ int main(int argc, char * argv[]) {
         temp_offset = strtol(input, &temp, 16) - start_address;
         if(temp_offset >= SIZE_OF_MEM || temp_offset < 0){
           printf("Not a valid address <ENTER> to continue.");
-          while(1){
-            scanf("%c",&error);
-            scanf("%c",&error);
-            if(error == '\n'){
-              break;
-            }
-          }
+          getEnterInput(error);
         } else {
           offset = temp_offset;
         }
