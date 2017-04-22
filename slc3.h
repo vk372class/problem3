@@ -12,6 +12,7 @@
 #define FETCH_OP 3
 #define EXECUTE 4
 #define STORE 5
+#define DONE 6
 
 #define ADD 1
 #define AND 5
@@ -26,7 +27,7 @@
 #define Z 2 //010
 #define P 1 //001
 
-#define HALT 0xF019
+#define HALT 25
 
 typedef unsigned short Register;
 

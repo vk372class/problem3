@@ -7,7 +7,7 @@
 Register memory[SIZE_OF_MEM]; // 32 words of memory enough to store simple program
 
 //Sets the condition codes, given a result.
-void setCC(Register result, CPU_p cpu) {
+void setCC(short result, CPU_p cpu) {
     if (result < 0) { //Negative result
         cpu->CC = N;
     } else if (result == 0) { //Result = 0
@@ -36,21 +36,16 @@ void printCurrentState(CPU_p cpu);// {
 //Function to handle TRAP routines.
 int trap(int trap_vector) {
     switch(trap_vector) {
-        case 25: //HALT
-            return 0;
+        case HALT: //HALT
+            return HALT;
     }
 }
 
 //Executes instructions on our simulated CPU.
-int controller(CPU_p cpu) {
-    if (cpu == NULL) {
-      return -1;
-    }
-
-    ALU_p alu = malloc(sizeof(struct ALU_s));
+int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
     Register opcode, Rd, Rs1, Rs2, immed_offset, nzp, BEN, pcOffset9; // fields for the IR
     int state = FETCH;
-    for (;;) { // efficient endless loop
+    while (state != DONE) {
         switch (state) {
             case FETCH: // microstates 18, 33, 35 in the book
                 cpu->MAR = cpu->PC;
@@ -207,12 +202,12 @@ int controller(CPU_p cpu) {
                         break;
                 }
 
-                state = FETCH;
-				printCurrentState(cpu);
+                state = DONE;
+				//printCurrentState(cpu);
                 break;
         }
     }
-
+    return 0;
 }
 
 void printCurrentState(CPU_p cpu) {
@@ -223,6 +218,7 @@ void printCurrentState(CPU_p cpu) {
     printf("        R%d: x%04X", i, cpu->regFile[i]);
     printf("        x%04X: x%04X\n", i+0x3000, memory[i]);
   }
+  printf("IR: %04X, PC: %04X, CC: %d\n", cpu->IR, cpu->PC, cpu->CC);
 }
 
 //Initializes the CPU and sets it into action.
@@ -241,29 +237,25 @@ void printCurrentState(CPU_p cpu) {
 
 int main(int argc, char * argv[]) {
     CPU_p cpu_pointer = malloc(sizeof(struct CPU_s));
-    cpu_pointer->PC = 0;
-    cpu_pointer->CC = Z; //initialize condition code to zero.
+    ALU_p alu_pointer = malloc(sizeof(struct ALU_s));
+    cpu_pointer->PC = 1;
+    cpu_pointer->CC = Z;
     char input[50];
     int choice;
     char error;
     char buf[5];
-    // cpu_pointer->regFile[0] = 0x1E;
-    // cpu_pointer->regFile[1] = 0x5;
+    int loadedProgram = 0;
+    int programHalted = 0;
+    int haltCode = 37;
+    cpu_pointer->regFile[0] = 0x1E; //R0 = 30
+    cpu_pointer->regFile[7] = 0x5; //R7 = 5
     // cpu_pointer->regFile[2] = 0xF;
     // cpu_pointer->regFile[3] = 0;
 
-    //char *temp;
-    //memory[0] = strtol(argv[1], &temp, 16);
-    //memory[1] = HALT; //TRAP #25
-    //memory[5] = 0xA0A0; //"You will need to put a value in location 4 - say 0xA0A0"
-    //memory[21] = 0x16A6; //ADD R3 R2 #6
-    //memory[22] = HALT; //TRAP #25
-    //memory[30] = 0x1672; //ADD R3 R1 #-14
-    //memory[31] = HALT; //TRAP #25
   while (1){
     printf("Welcome to the LC-3 Simulator Simulator\n");
 	  printCurrentState(cpu_pointer);
-	  printf("Select: 1) Load, 3) Step, 5) Display Mem, 9) Exit\n> _");
+	  printf("Select: 1) Load, 3) Step, 5) Display Mem, 9) Exit\n> ");
     scanf("%d", &choice);
     switch(choice){
       case 1:
@@ -271,6 +263,7 @@ int main(int argc, char * argv[]) {
         scanf("%s", input);
         FILE *fp = fopen(input, "r");
         if(fp == NULL){
+          loadedProgram = 0;
           printf("Error: File not found. Press <ENTER> to continue");
           while(1){
             scanf("%c",&error);
@@ -293,9 +286,40 @@ int main(int argc, char * argv[]) {
             i++;
             fgets(buf,3, fp);
           }
+          loadedProgram = 1;
+          programHalted == 0;
+          //Initialize cpu fields;
+          cpu_pointer->PC = 1;
+          cpu_pointer->CC = Z;
         }
         break;
       case 3:
+        if (loadedProgram == 1) {
+          int response = completeOneInstructionCycle(cpu_pointer, alu_pointer);
+          if (response == haltCode) {
+            loadedProgram = 0;
+            programHalted = 1;
+            printf("\n======Program halted.======\n");
+          }
+        } else if (programHalted == 1){
+          printf("Your program has halted. Please load another program. \nPress <ENTER> to continue");
+          while(1){
+            scanf("%c",&error);
+            scanf("%c",&error);
+            if(error == '\n'){
+              break;
+            }
+          }
+        } else {
+          printf("Please load a program first. Press <ENTER> to continue");
+          while(1){
+            scanf("%c",&error);
+            scanf("%c",&error);
+            if(error == '\n'){
+              break;
+            }
+          }
+        }
         break;
       case 5:
         break;
@@ -303,21 +327,11 @@ int main(int argc, char * argv[]) {
         return 0;
         break;
       default:
-        printf("Error: Invalad selection\n");
+        printf("Error: Invalid selection\n");
         break;
 
     }
 
   }
-	//GET INPUT.
-
-	//process input
-
-    //controller(cpu_pointer);
-
-    //printf("===========HALTED==============\n");
-    //printCurrentState(cpu_pointer);
-
-
-    return 0;
+  return 0;
 }
