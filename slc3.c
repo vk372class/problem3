@@ -18,7 +18,7 @@ void setCC(short result, CPU_p cpu) {
 }
 
 //Prints out the register values, the IR, PC, MAR, and MDR.
-void printCurrentState(CPU_p cpu);// {
+void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset);// {
 //   int i;
 //   int numOfRegisters = sizeof(cpu->regFile)/sizeof(cpu->regFile[0]);
 //   printf("Registers: ");
@@ -56,7 +56,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========FETCH==============\n");
-                printCurrentState(cpu);
+                printCurrentState(cpu,alu, 0);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 state = DECODE;
@@ -80,7 +80,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========DECODE==============\n");
-                printCurrentState(cpu);
+                printCurrentState(cpu, alu, 0);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -107,7 +107,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========EVAL_ADDR==============\n");
-                printCurrentState(cpu);
+                printCurrentState(cpu, alu, 0);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -142,7 +142,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========FETCH_OP==============\n");
-                printCurrentState(cpu);
+                printCurrentState(cpu, alu, 0);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -174,7 +174,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========EXECUTE==============\n");
-                printCurrentState(cpu);
+                printCurrentState(cpu, alu, 0);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -210,15 +210,36 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
     return 0;
 }
 
-void printCurrentState(CPU_p cpu) {
-  int i;
+void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset) {
+  int i , j;
   int numOfRegisters = sizeof(cpu->regFile)/sizeof(cpu->regFile[0]);
   printf("        Registers           Memory\n");
-  for (i = 0; i < numOfRegisters; i++) {
-    printf("        R%d: x%04X", i, cpu->regFile[i]);
-    printf("        x%04X: x%04X\n", i+0x3000, memory[i]);
+  for (i = 0, j = mem_Offset; i < DISPLAY_SIZE; i++, j++) {
+    if(i < numOfRegisters) {
+      printf("        R%d: x%04X        ", i, cpu->regFile[i]);
+    } else {
+        switch(i){
+          case 11:
+            printf("   PC:x%04X   IR:x%04X   ",cpu->PC, cpu->IR);
+            break;
+          case 12:
+            printf("   A: x%04X   B: x%04X   ",alu->A, alu->B);
+            break;
+          case 13:
+            printf("  MAR:x%04X MDR: x%04X   ",cpu->MAR, cpu->MDR);
+            break;
+          case 14:
+            printf("      CC:N:%d Z:%d P:%d     ",cpu->n, cpu->z, cpu->p);
+            break;
+          default:
+            printf("                         ");
+            break;
+        }
+    }
+    if(j < SIZE_OF_MEM){
+      printf("x%04X: x%04X\n", j+0x3000, memory[j]);
+    }
   }
-  printf("IR: %04X, PC: %04X, CC: %d\n", cpu->IR, cpu->PC, cpu->CC);
 }
 
 //Initializes the CPU and sets it into action.
@@ -238,12 +259,15 @@ void printCurrentState(CPU_p cpu) {
 int main(int argc, char * argv[]) {
     CPU_p cpu_pointer = malloc(sizeof(struct CPU_s));
     ALU_p alu_pointer = malloc(sizeof(struct ALU_s));
-    cpu_pointer->PC = 1;
+    cpu_pointer->PC = 0;
     cpu_pointer->CC = Z;
     char input[50];
     int choice;
     char error;
     char buf[5];
+    char *temp;
+    int offset = 0;
+    unsigned short Start_Address = 0x3000;
     int loadedProgram = 0;
     int programHalted = 0;
     int haltCode = 37;
@@ -254,11 +278,11 @@ int main(int argc, char * argv[]) {
 
   while (1){
     printf("Welcome to the LC-3 Simulator Simulator\n");
-	  printCurrentState(cpu_pointer);
+	  printCurrentState(cpu_pointer, alu_pointer, offset);
 	  printf("Select: 1) Load, 3) Step, 5) Display Mem, 9) Exit\n> ");
     scanf("%d", &choice);
     switch(choice){
-      case 1:
+      case LOAD:
         printf("File name: ");
         scanf("%s", input);
         FILE *fp = fopen(input, "r");
@@ -274,8 +298,12 @@ int main(int argc, char * argv[]) {
           }
         } else {
           int i = 0;
-          char *temp;
           while(!feof(fp)) {
+            if(i == 0){
+              fgets(buf, 5, fp);
+              Start_Address = strtol(buf, &temp, 16);
+              fgets(buf,3, fp);
+            }
             fgets(buf, 5, fp);
             printf("%s\n", buf);
             if(i >= SIZE_OF_MEM){
@@ -286,6 +314,7 @@ int main(int argc, char * argv[]) {
             i++;
             fgets(buf,3, fp);
           }
+          fclose(fp);
           loadedProgram = 1;
           programHalted == 0;
           //Initialize cpu fields;
@@ -293,7 +322,7 @@ int main(int argc, char * argv[]) {
           cpu_pointer->CC = Z;
         }
         break;
-      case 3:
+      case STEP:
         if (loadedProgram == 1) {
           int response = completeOneInstructionCycle(cpu_pointer, alu_pointer);
           if (response == haltCode) {
@@ -321,7 +350,10 @@ int main(int argc, char * argv[]) {
           }
         }
         break;
-      case 5:
+      case DISPLAY_MEM:
+        printf("Starting Address: _");
+        scanf("%s", input);
+        offset = strtol(input, &temp, 16) - Start_Address;
         break;
       case 9:
         return 0;

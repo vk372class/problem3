@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #define DEBUG 0
 #define SIZE_OF_MEM 32
+#define DISPLAY_SIZE 16
 
 #define FETCH 0
 #define DECODE 1
@@ -26,6 +27,11 @@
 #define N 4 //100
 #define Z 2 //010
 #define P 1 //001
+
+#define LOAD 1
+#define STEP 3
+#define DISPLAY_MEM 5
+#define EXIT 9
 
 #define HALT 25
 
