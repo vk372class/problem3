@@ -1,3 +1,7 @@
+/*
+ * Parker Olive
+ * Vlad Kaganyuk
+ */
 #ifndef LC3_H
 #define LC3_H
 

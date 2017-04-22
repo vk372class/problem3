@@ -1,3 +1,7 @@
+/*
+ * Parker Olive
+ * Vlad Kaganyuk
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,20 +22,7 @@ void setCC(short result, CPU_p cpu) {
 }
 
 //Prints out the register values, the IR, PC, MAR, and MDR.
-void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset);// {
-//   int i;
-//   int numOfRegisters = sizeof(cpu->regFile)/sizeof(cpu->regFile[0]);
-//   printf("Registers: ");
-//   for (i = 0; i < numOfRegisters; i++) {
-//     printf("R%d: %d | ", i, cpu->regFile[i]);
-//   }
-//   printf("\nIR: %d\nPC: %d\nMAR: %d\nMDR: %d\n", cpu->IR, cpu->PC, cpu->MAR, cpu->MDR);
-//
-//   for (i = 0; i < SIZE_OF_MEM; i++) {
-//     printf("memory[%d]: %d\n", i, memory[i]);
-//   }
-//   printf("\n");
-// }
+void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset, unsigned short start_address);
 
 //Function to handle TRAP routines.
 int trap(int trap_vector) {
@@ -56,7 +47,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========FETCH==============\n");
-                printCurrentState(cpu,alu, 0);
+                printCurrentState(cpu,alu, 0, 0x3000);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 state = DECODE;
@@ -80,7 +71,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========DECODE==============\n");
-                printCurrentState(cpu, alu, 0);
+                printCurrentState(cpu, alu, 0, 0x3000);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -107,7 +98,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========EVAL_ADDR==============\n");
-                printCurrentState(cpu, alu, 0);
+                printCurrentState(cpu, alu, 0, 0x3000);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -142,7 +133,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========FETCH_OP==============\n");
-                printCurrentState(cpu, alu, 0);
+                printCurrentState(cpu, alu, 0, 0x3000);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -174,7 +165,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========EXECUTE==============\n");
-                printCurrentState(cpu, alu, 0);
+                printCurrentState(cpu, alu, 0, 0x3000);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -210,7 +201,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
     return 0;
 }
 
-void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset) {
+void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset, unsigned short start_address) {
   int i , j;
   int numOfRegisters = sizeof(cpu->regFile)/sizeof(cpu->regFile[0]);
   printf("        Registers           Memory\n");
@@ -220,7 +211,7 @@ void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset) {
     } else {
         switch(i){
           case 11:
-            printf("   PC:x%04X   IR:x%04X   ",cpu->PC, cpu->IR);
+            printf("   PC:x%04X   IR:x%04X   ",cpu->PC + start_address, cpu->IR);
             break;
           case 12:
             printf("   A: x%04X   B: x%04X   ",alu->A  & 0xffff, alu->B & 0xffff);
@@ -229,7 +220,7 @@ void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset) {
             printf("  MAR:x%04X MDR: x%04X   ",cpu->MAR, cpu->MDR & 0xffff);
             break;
           case 14:
-            printf("      CC: N:%d Z:%d P:%d    ",cpu->CC & 4, cpu->z & 2, cpu->p & 1);
+            printf("      CC: N:%d Z:%d P:%d    ",(cpu->CC & 4) > 0, (cpu->CC & 2) > 0, (cpu->CC & 1) > 0);
             break;
           default:
             printf("                         ");
@@ -244,20 +235,6 @@ void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset) {
   }
 }
 
-//Initializes the CPU and sets it into action.
-// int main(int argc, char* argv[]){
-//
-// 	char *temp;
-// 	int i;
-// 	CPU_p c = malloc(sizeof(CPU_s));
-// 	 for(i = 1; i < argc; i++){
-// 	 	memory[i-1] = strtol(argv[i], &temp, 16);
-// 		printf("memory[%d]: %04X\n",i-1,memory[i-1]);
-// 	}
-// 	 controller(c);
-// 	return 0;
-// }
-
 int main(int argc, char * argv[]) {
     CPU_p cpu_pointer = malloc(sizeof(struct CPU_s));
     ALU_p alu_pointer = malloc(sizeof(struct ALU_s));
@@ -268,9 +245,9 @@ int main(int argc, char * argv[]) {
     char error;
     char buf[5];
     char *temp;
-    int temp_o;
+    int temp_offset;
     int offset = 0;
-    unsigned short Start_Address = 0x3000;
+    unsigned short start_address = 0x3000;
     int loadedProgram = 0;
     int programHalted = 0;
     int haltCode = 37;
@@ -281,7 +258,7 @@ int main(int argc, char * argv[]) {
 
   while (1){
     printf("Welcome to the LC-3 Simulator Simulator\n");
-	  printCurrentState(cpu_pointer, alu_pointer, offset);
+	  printCurrentState(cpu_pointer, alu_pointer, offset, start_address);
 	  printf("Select: 1) Load, 3) Step, 5) Display Mem, 9) Exit\n> ");
     scanf("%d", &choice);
     switch(choice){
@@ -304,7 +281,7 @@ int main(int argc, char * argv[]) {
           while(!feof(fp)) {
             if(i == 0){
               fgets(buf, 5, fp);
-              Start_Address = strtol(buf, &temp, 16);
+              start_address = strtol(buf, &temp, 16);
               fgets(buf,3, fp);
             }
             fgets(buf, 5, fp);
@@ -356,8 +333,8 @@ int main(int argc, char * argv[]) {
 
         printf("Starting Address: ");
         scanf("%s", input);
-        temp_o = strtol(input, &temp, 16) - Start_Address;
-        if(temp_o >= SIZE_OF_MEM){
+        temp_offset = strtol(input, &temp, 16) - start_address;
+        if(temp_offset >= SIZE_OF_MEM || temp_offset < 0){
           printf("Not a valid address <ENTER> to continue.");
           while(1){
             scanf("%c",&error);
@@ -367,11 +344,12 @@ int main(int argc, char * argv[]) {
             }
           }
         } else {
-          offset = temp_o;
+          offset = temp_offset;
         }
 
         break;
       case EXIT:
+        printf("Goodbye\n");
         return 0;
         break;
       default:
