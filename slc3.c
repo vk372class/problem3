@@ -227,7 +227,7 @@ void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset, unsigned short star
         }
     }
     if(j < SIZE_OF_MEM){
-      printf("x%04X: x%04X\n", j + 0x3000, memory[j]);
+      printf("x%04X: x%04X\n", j + start_address, memory[j]);
     } else {
       printf("\n");
     }
