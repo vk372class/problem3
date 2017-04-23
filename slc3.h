@@ -4,12 +4,13 @@
  */
 #ifndef LC3_H
 #define LC3_H
-
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #define DEBUG 0
 #define SIZE_OF_MEM 32
 #define DISPLAY_SIZE 16
+#define DEFAULT_ADDRESS 0x3000
 
 #define FETCH 0
 #define DECODE 1

@@ -2,9 +2,7 @@
  * Parker Olive
  * Vlad Kaganyuk
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+
 #include "slc3.h"
 
 // you can define a simple memory module here for this program
@@ -47,7 +45,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========FETCH==============\n");
-                printCurrentState(cpu,alu, 0, 0x3000);
+                printCurrentState(cpu,alu, 0, DEFAULT_ADDRESS);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 state = DECODE;
@@ -71,7 +69,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========DECODE==============\n");
-                printCurrentState(cpu, alu, 0, 0x3000);
+                printCurrentState(cpu, alu, 0, DEFAULT_ADDRESS);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -98,7 +96,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========EVAL_ADDR==============\n");
-                printCurrentState(cpu, alu, 0, 0x3000);
+                printCurrentState(cpu, alu, 0, DEFAULT_ADDRESS);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -133,7 +131,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========FETCH_OP==============\n");
-                printCurrentState(cpu, alu, 0, 0x3000);
+                printCurrentState(cpu, alu, 0, DEFAULT_ADDRESS);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -165,7 +163,7 @@ int completeOneInstructionCycle(CPU_p cpu, ALU_p alu) {
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 #if DEBUG == 1
                 printf("\n===========EXECUTE==============\n");
-                printCurrentState(cpu, alu, 0, 0x3000);
+                printCurrentState(cpu, alu, 0, DEFAULT_ADDRESS);
                 #endif
                 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -206,17 +204,17 @@ void printCurrentState(CPU_p cpu, ALU_p alu, int mem_Offset, unsigned short star
   printf("        Registers           Memory\n");
   for (i = 0, j = mem_Offset; i < DISPLAY_SIZE; i++, j++) {
     if(i < numOfRegisters) {
-      printf("        R%d: x%04X        ", i, cpu->regFile[i] & 0xffff);
+      printf("        R%d: x%04X        ", i, cpu->regFile[i] & 0xffff);  //don't use leading 4 bits
     } else {
         switch(i){
           case 11:
             printf("   PC:x%04X   IR:x%04X   ",cpu->PC + start_address, cpu->IR);
             break;
           case 12:
-            printf("   A: x%04X   B: x%04X   ",alu->A  & 0xffff, alu->B & 0xffff);
+            printf("   A: x%04X   B: x%04X   ",alu->A  & 0xffff, alu->B & 0xffff); //don't use leading 4 bits
             break;
           case 13:
-            printf("  MAR:x%04X MDR: x%04X   ",cpu->MAR, cpu->MDR & 0xffff);
+            printf("  MAR:x%04X MDR: x%04X   ",cpu->MAR, cpu->MDR & 0xffff); //don't use leading 4 bits
             break;
           case 14:
             printf("      CC: N:%d Z:%d P:%d    ",(cpu->CC & 4) > 0, (cpu->CC & 2) > 0, (cpu->CC & 1) > 0);
@@ -258,7 +256,7 @@ int main(int argc, char * argv[]) {
     char *temp;
     int temp_offset;
     int offset = 0;
-    unsigned short start_address = 0x3000;
+    unsigned short start_address = DEFAULT_ADDRESS;
     int loadedProgram = 0;
     int programHalted = 0;
     int haltCode = 37; //0x25 = 37
